@@ -19,15 +19,13 @@ using Intel.RealSense;
 using Stream = Intel.RealSense.Stream;
 using System.Windows.Threading;
 using System.Diagnostics;
+using Sjoelbak;
+using System.Collections;
 
 namespace DistRS
 {
     public partial class MainWindow : Window
     {
-        private Pipeline pipe;
-        private Colorizer colorizer;
-        private CancellationTokenSource tokenSource = new CancellationTokenSource();
-
         const int height = 240;
         const int width = 320;
         const int arraySize = ((320 / 5) * (240 / 5));
@@ -36,7 +34,7 @@ namespace DistRS
 
         int callibrationClickCount = 0;
         Point callibrationTopLeft = new Point(0f, 0f);
-        Point callibrationBottomRight = new Point(320f, 240f);
+        Point callibrationBottomRight = new Point(width, height);
         bool callibrationCornersSet = false;
 
         List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
@@ -56,134 +54,25 @@ namespace DistRS
 
         private SerialCommunication goalCom;
         private SerialCommunication launcherCom;
+
         int pixelCount = 0;
 
-        static Action<VideoFrame> UpdateImage(System.Windows.Controls.Image img)
-        {
-            var bmap = img.Source as WriteableBitmap;
-            return new Action<VideoFrame>(frame =>
-            {
-                var rect = new Int32Rect(0, 0, frame.Width, frame.Height);
-                bmap.WritePixels(rect, frame.Data, frame.Stride * frame.Height, frame.Stride);
-            });
-        }
+        RealSenseL515 depthSensor;
         public MainWindow()
         {
             InitializeComponent();
 
-            try
-            {
-                Action<VideoFrame> updateDepth;
-                Action<VideoFrame> updateColor;
-
-                // The colorizer processing block will be used to visualize the depth frames.
-                colorizer = new Colorizer();
-
-                // Create and config the pipeline to strem color and depth frames.
-                pipe = new Pipeline();
-
-                using (var ctx = new Context())
-                {
-                    var devices = ctx.QueryDevices();
-                    var dev = devices[0];
-
-                    Console.WriteLine("\nUsing device 0, an {0}", dev.Info[CameraInfo.Name]);
-                    Console.WriteLine("    Serial number: {0}", dev.Info[CameraInfo.SerialNumber]);
-                    Console.WriteLine("    Firmware version: {0}", dev.Info[CameraInfo.FirmwareVersion]);
-
-                    var sensors = dev.QuerySensors();
-                    var depthSensor = sensors[0];
-                    var colorSensor = sensors[1];
-
-                    var depthProfile = depthSensor.StreamProfiles
-                                        .Where(p => p.Stream == Stream.Depth)
-                                        .OrderBy(p => p.Framerate)
-                                        .Select(p => p.As<VideoStreamProfile>()).First();
-
-                    var colorProfile = colorSensor.StreamProfiles
-                                        .Where(p => p.Stream == Stream.Color)
-                                        .OrderBy(p => p.Framerate)
-                                        .Select(p => p.As<VideoStreamProfile>()).First();
-
-                    var cfg = new Config();
-                    cfg.EnableStream(Stream.Depth, 320, 240, depthProfile.Format, depthProfile.Framerate);
-                    cfg.EnableStream(Stream.Color, colorProfile.Width, colorProfile.Height, colorProfile.Format, colorProfile.Framerate);
-
-
-                    var pp = pipe.Start(cfg);
-
-                    SetupWindow(pp, out updateDepth, out updateColor);
-                }
-                Task.Factory.StartNew(() =>
-                {
-                    while (!tokenSource.Token.IsCancellationRequested)
-                    {
-                        using (var frames = pipe.WaitForFrames())
-                        {
-                            var colorFrame = frames.ColorFrame.DisposeWith(frames);
-                            var depthFrame = frames.DepthFrame.DisposeWith(frames);
-
-                            var colorizedDepth = colorizer.Process<VideoFrame>(depthFrame).DisposeWith(frames);
-
-                            Dispatcher.Invoke(DispatcherPriority.Render, updateDepth, colorizedDepth);
-                            Dispatcher.Invoke(DispatcherPriority.Render, updateColor, colorFrame);
-
-                            // System.ObjectDisposedException: 'Cannot access a disposed object.
-
-                            Dispatcher.Invoke(new Action(() =>
-                            {
-                                String depth_dev_sn = depthFrame.Sensor.Info[CameraInfo.SerialNumber];
-                            }));
-                        }
-                    }
-                }, tokenSource.Token);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Sometimes happens on resetting, but it'll take the next one automatically. Can be ignored.
-            }
-            catch (Exception)
-            {
-                Application.Current.Shutdown();
-            }
-
-        }
-
-        private void Control_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            tokenSource.Cancel();
-        }
-
-        private void SetupWindow(PipelineProfile pipelineProfile, out Action<VideoFrame> depth, out Action<VideoFrame> color)
-        {
-            using (var vsp = pipelineProfile.GetStream(Stream.Depth).As<VideoStreamProfile>())
-                imgDepth.Source = new WriteableBitmap(vsp.Width, vsp.Height, 96d, 96d, PixelFormats.Rgb24, null);
-            depth = UpdateImage(imgDepth);
-
-            using (var vsp = pipelineProfile.GetStream(Stream.Color).As<VideoStreamProfile>())
-                imgColor.Source = new WriteableBitmap(vsp.Width, vsp.Height, 96d, 96d, PixelFormats.Rgb24, null);
-            color = UpdateImage(imgColor);
-        }
-
-        private void ButtonReadDist_Click(object sender, RoutedEventArgs e)
-        {
-            using (var frames = pipe.WaitForFrames())
-            using (var depth = frames.DepthFrame)
-            {
-                int x = int.Parse(Xcoordinate.Text) - 1;
-                int y = int.Parse(Ycoordinate.Text) - 1;
-                Console.WriteLine("The camera is pointing at an object " +
-                    depth.GetDistance(x, y) + " meters away\t");
-                tbResult.Text = "Distance is " + depth.GetDistance(x, y) + " m";
-                depth.Dispose();
-                frames.Dispose();
-            }
+            // Create an instance of the sensor.
+            depthSensor = new RealSenseL515();
+            // Initialize
+            depthSensor.startDepthSensor(imgDepth, imgColor);
         }
 
         // Create a callibration distance array
         private void ButtonCallibrate_Click(object sender, RoutedEventArgs e)
         {
-            CheckPixels(callibrationArray);
+            callibrationArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
+            //CheckPixels(callibrationArray);
             tbDotCount.Text = "Callibration done.";
         }
         // Reset current values to be able to start the next throw.
@@ -192,39 +81,6 @@ namespace DistRS
             CanvasMap.Children.Clear();
             discPoints.Clear();
             tbDotCount.Text = "Reset canvas.";
-        }
-
-        private float GetDistance(int x, int y)
-        {
-            float num = 0;
-            using (var frames = pipe.WaitForFrames())
-            using (var depth = frames.DepthFrame)
-            {
-                num = depth.GetDistance(x, y);
-                depth.Dispose();
-                frames.Dispose();
-            }
-            return num;
-        }
-
-        private void CheckPixels(float[] array)
-        {
-            int num = -1;
-
-            using (var frames = pipe.WaitForFrames())
-            using (var depth = frames.DepthFrame)
-            {
-                for (int x = (int)callibrationTopLeft.X; x < callibrationBottomRight.X; x++) // Check Width.
-                {
-                    for (int y = (int)callibrationTopLeft.Y; y < callibrationBottomRight.Y; y++) // Check Height. 
-                    {
-                        num++;
-                        array[num] = depth.GetDistance(x, y);
-                    }
-                }
-                //depth.Dispose();
-                frames.Dispose();
-            }
         }
 
         private void ComparePixels()
@@ -446,7 +302,8 @@ namespace DistRS
         {
             while (measureLooping)
             {
-                CheckPixels(distArray);
+                //CheckPixels(distArray);
+                distArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
                 ComparePixels();
             }
             observeThread.Abort();
