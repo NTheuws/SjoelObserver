@@ -93,6 +93,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DiscTrajectory.cs" />
     <Compile Include="IDepthSensor.cs" />
     <Compile Include="RealSenseL515.cs" />
     <Compile Include="SerialCommunication.cs" />

@@ -21,6 +21,7 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using Sjoelbak;
 using System.Collections;
+using System.Xml;
 
 namespace DistRS
 {
@@ -143,8 +144,6 @@ namespace DistRS
                             // Draw the map.
                             CanvasMap.Children.Add(rectangles[x, y]);
                         });
-                        // Save the canvas for later.
-                        trajectories.Add(CanvasMap);
                     }
                 }
                 y++;
@@ -247,7 +246,7 @@ namespace DistRS
             {
                 case 0: // First click.
                     callibrationTopLeft = p;
-                    tbText.Text = "Click on the bottom left most point.";
+                    tbText.Text = "Click on the bottom right most point.";
 
                     break;
                 case 1: // Second click.
@@ -284,7 +283,7 @@ namespace DistRS
                 observeThread = new System.Threading.Thread(MeassureLoop);
                 observeThread.IsBackground = true;
                 observeThread.Start();
-                tbText.Text = "Start Measuring";
+                tbText.Text = "Started Measuring";
             }
             else
             {
@@ -292,10 +291,12 @@ namespace DistRS
                 placeFinalDot = true;
                 measureLooping = false;
                 measureLoopEnding = true;
-                tbText.Text = "Stop Measuring";
+                tbText.Text = "Stopped Measuring";
+
+                SaveTrajectory();
             }
         }
-
+        // Thread to continiously loop scanning and comparing distances.
         private void MeassureLoop()
         {
             while (measureLooping)
@@ -307,7 +308,40 @@ namespace DistRS
             }
             observeThread.Abort();
             measureLoopEnding = false;
-            ComparePixels();
+            ComparePixels(); 
+        }
+
+        private void SaveTrajectory()
+        {
+            // Save the canvas for later.
+            trajectories.Add(CanvasMap);
+
+            // Update the slider
+            this.Dispatcher.Invoke(() =>
+            {
+                lbShownIndex.Content = "0 / " + trajectories.Count + " Trajectories";
+                indexSlider.Maximum = trajectories.Count;
+            });
+        }
+
+        // When the slider value has been moved.
+        private void indexSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // When meassuring is in process go back to 0;
+            if (measureLooping)
+            {
+                indexSlider.Value = 0;
+            }
+            // Show the appropriate image
+            else
+            {
+                CanvasMap.Children.Clear();
+                int index = Convert.ToInt32(Math.Round(indexSlider.Value));
+                if (index > 0)
+                {
+                    //Show the hovered index trajectory.
+                }
+            }
         }
     }
 }

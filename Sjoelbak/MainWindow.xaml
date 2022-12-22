@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DistRS"
         mc:Ignorable="d"
-        Title="Distance and Camera view" Height="607" Width="1054" MouseLeftButtonUp="Window_MouseLeftButtonUp">
+        Title="Distance and Camera view" Height="648" Width="1054" MouseLeftButtonUp="Window_MouseLeftButtonUp">
     <Grid ShowGridLines="False">
 
         <Image x:Name="imgColor" Margin="22,303,0,0" Height="240" Width="320" HorizontalAlignment="Left" VerticalAlignment="Top" />
 
         <Image x:Name="imgDepth" Width="640" Margin="382,63,0,0" HorizontalAlignment="Left" Height="480" VerticalAlignment="Top" />
         <Button x:Name="BtnReset" Content="Reset lines" HorizontalAlignment="Left" Margin="8,63,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonReset_Click"/>
-        <TextBox x:Name="tbText" HorizontalAlignment="Left" Height="68" Margin="8,135,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="Click on the top right most point of the sjoelbak."/>
+        <TextBox x:Name="tbText" HorizontalAlignment="Left" Height="68" Margin="8,135,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="Click on the top left most point of the sjoelbak."/>
         <Button x:Name="BtnConnect" Content="Connect Arduino" HorizontalAlignment="Left" Margin="8,87,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonConnect_Click"/>
         <Canvas x:Name="CanvasMap" Margin="382,63,0,0" Width="640" Opacity="0.5" Height="480" VerticalAlignment="Top" HorizontalAlignment="Left" >
             <Canvas.RenderTransform>
@@ -23,6 +23,8 @@
             </Canvas.RenderTransform>
         </Canvas>
         <Button x:Name="BtnLoopMeassure" Content="Measure loop" HorizontalAlignment="Left" Margin="8,111,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonMeassureLoop_Click"/>
+        <Label x:Name="lbShownIndex" Content="0 / 0 Trajectories" HorizontalAlignment="Left" Margin="382,570,0,0" VerticalAlignment="Top" Width="182"/>
+        <Slider x:Name="indexSlider" HorizontalAlignment="Left" Margin="382,548,0,0" VerticalAlignment="Top" Width="640" Height="26" ValueChanged="indexSlider_ValueChanged" Maximum="1" SmallChange="1"/>
     </Grid>
 
 </Window>
