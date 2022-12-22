@@ -5,21 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DistRS"
         mc:Ignorable="d"
-        Title="Distance and Camera view" Height="864" Width="836.8" MouseLeftButtonUp="Window_MouseLeftButtonUp">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="101*"/>
-            <RowDefinition Height="38*"/>
-        </Grid.RowDefinitions>
-        <TextBox x:Name="txtTimeStamp" Grid.Column="0" Margin="0,0,-0.6,198.4"/>
-        <Image x:Name="imgColor" Margin="120,606,390.4,-11.6" Height="240" Width="320" Grid.RowSpan="2" />
+        Title="Distance and Camera view" Height="607" Width="1054" MouseLeftButtonUp="Window_MouseLeftButtonUp">
+    <Grid ShowGridLines="False">
 
-        <Image x:Name="imgDepth" Width="640" Height="480" Margin="125,63,65.4,63.4" />
-        <Button x:Name="BtnCallibrate" Content="Callibrate" HorizontalAlignment="Left" Margin="10,78,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonCallibrate_Click"/>
-        <Button x:Name="BtnReset" Content="Reset" HorizontalAlignment="Left" Margin="10,102,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonReset_Click"/>
-        <TextBox x:Name="tbDotCount" HorizontalAlignment="Left" Height="19" Margin="10,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110"/>
-        <Button x:Name="BtnConnect" Content="Connect" HorizontalAlignment="Left" Margin="10,150,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonConnect_Click"/>
-        <Canvas x:Name="CanvasMap" Height="480" Margin="120,63,70.4,0" VerticalAlignment="Top" Width="640" Opacity="0.5" >
+        <Image x:Name="imgColor" Margin="22,303,0,0" Height="240" Width="320" HorizontalAlignment="Left" VerticalAlignment="Top" />
+
+        <Image x:Name="imgDepth" Width="640" Margin="382,63,0,0" HorizontalAlignment="Left" Height="480" VerticalAlignment="Top" />
+        <Button x:Name="BtnReset" Content="Reset lines" HorizontalAlignment="Left" Margin="8,63,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonReset_Click"/>
+        <TextBox x:Name="tbText" HorizontalAlignment="Left" Height="68" Margin="8,135,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="Click on the top right most point of the sjoelbak."/>
+        <Button x:Name="BtnConnect" Content="Connect Arduino" HorizontalAlignment="Left" Margin="8,87,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonConnect_Click"/>
+        <Canvas x:Name="CanvasMap" Margin="382,63,0,0" Width="640" Opacity="0.5" Height="480" VerticalAlignment="Top" HorizontalAlignment="Left" >
             <Canvas.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform x:Name="st"/>
@@ -27,7 +22,7 @@
                 </TransformGroup>
             </Canvas.RenderTransform>
         </Canvas>
-        <Button x:Name="BtnLoopMeassure" Content="Measure loop" HorizontalAlignment="Left" Margin="10,174,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonMeassureLoop_Click"/>
+        <Button x:Name="BtnLoopMeassure" Content="Measure loop" HorizontalAlignment="Left" Margin="8,111,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonMeassureLoop_Click"/>
     </Grid>
 
 </Window>

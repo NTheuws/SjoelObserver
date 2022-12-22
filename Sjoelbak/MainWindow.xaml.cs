@@ -72,19 +72,12 @@ namespace DistRS
             depthSensor.startDepthSensor(imgDepth, imgColor);
         }
 
-        // Create a callibration distance array
-        private void ButtonCallibrate_Click(object sender, RoutedEventArgs e)
-        {
-            callibrationArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
-            //CheckPixels(callibrationArray);
-            tbDotCount.Text = "Callibration done.";
-        }
         // Reset current values to be able to start the next throw.
         private void ButtonReset_Click(object sender, RoutedEventArgs e)
         {
             CanvasMap.Children.Clear();
             discPoints.Clear();
-            tbDotCount.Text = "Reset canvas.";
+            tbText.Text = "Canvas has been reset.";
         }
 
         private void ComparePixels()
@@ -254,6 +247,7 @@ namespace DistRS
             {
                 case 0: // First click.
                     callibrationTopLeft = p;
+                    tbText.Text = "Click on the bottom left most point.";
 
                     break;
                 case 1: // Second click.
@@ -270,6 +264,10 @@ namespace DistRS
                     // Max values are multiplied by 2 since the pixelcount is divided by 2.
                     xmax = Convert.ToInt32(callibrationBottomRight.X - callibrationTopLeft.X) * pixelDivider;
                     ymax = Convert.ToInt32(callibrationBottomRight.Y - callibrationTopLeft.Y) * pixelDivider;
+
+                    // Create a callibration frame.
+                    callibrationArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
+                    tbText.Text = "Callibration done.";
                     break;
             }
             callibrationClickCount++;
@@ -286,7 +284,7 @@ namespace DistRS
                 observeThread = new System.Threading.Thread(MeassureLoop);
                 observeThread.IsBackground = true;
                 observeThread.Start();
-                tbDotCount.Text = "Start Measuring";
+                tbText.Text = "Start Measuring";
             }
             else
             {
@@ -294,7 +292,7 @@ namespace DistRS
                 placeFinalDot = true;
                 measureLooping = false;
                 measureLoopEnding = true;
-                tbDotCount.Text = "Stop Measuring";
+                tbText.Text = "Stop Measuring";
             }
         }
 
