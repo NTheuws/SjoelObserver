@@ -22,6 +22,7 @@ using System.Diagnostics;
 using Sjoelbak;
 using System.Collections;
 using System.Xml;
+using System.Reflection;
 
 namespace DistRS
 {
@@ -44,6 +45,8 @@ namespace DistRS
         // Lists to keep the past throws saved.
         List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
         List<Canvas> trajectories = new List<Canvas>(); // Trajectory of each throw, so it can be shown later.
+        List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
+        DiscTrajectory discTrajectory;
 
         // Variables for the minimal and maximum size of the lines drawn.
         int xmin = 0;
@@ -76,9 +79,7 @@ namespace DistRS
         // Reset current values to be able to start the next throw.
         private void ButtonReset_Click(object sender, RoutedEventArgs e)
         {
-            CanvasMap.Children.Clear();
-            discPoints.Clear();
-            tbText.Text = "Canvas has been reset.";
+            ClearCanvasTrajectory();
         }
 
         private void ComparePixels()
@@ -142,7 +143,8 @@ namespace DistRS
                                         RenderTransform = new TranslateTransform(x * pixelDivider, y * pixelDivider)
                                     };
                             // Draw the map.
-                            CanvasMap.Children.Add(rectangles[x, y]);
+                            CanvasMap.Children.Add(rectangles[x, y]); // Add to the canvas.
+                            discTrajectory.AddDot(rectangles[x, y]); // Add to the trajectory.
                         });
                     }
                 }
@@ -219,7 +221,8 @@ namespace DistRS
                                     MessageBox.Show("It wasn't calibrated correctly, please try again.");
                                 }
                             }
-                            CanvasMap.Children.Add(tempLine);
+                            CanvasMap.Children.Add(tempLine); // Add to the currently shown canvas.
+                            discTrajectory.AddLine(tempLine); // Add line to the trajectory.
                         });
                     }
                 }
@@ -277,6 +280,7 @@ namespace DistRS
         {
             if (!measureLooping)
             {
+                discTrajectory = new DiscTrajectory(); // new trajectory
                 measureLooping = true;
                 placeFinalDot = false;
                 // Start the loop in another thread.
@@ -315,31 +319,53 @@ namespace DistRS
         {
             // Save the canvas for later.
             trajectories.Add(CanvasMap);
+            // Save the trajectory to the list for later use.
+            discTrajectories.Add(discTrajectory);
 
             // Update the slider
             this.Dispatcher.Invoke(() =>
             {
-                lbShownIndex.Content = "0 / " + trajectories.Count + " Trajectories";
+                lbShownIndex.Content = "Trajectory 0 / " + trajectories.Count;
                 indexSlider.Maximum = trajectories.Count;
+                indexSlider.Value = 0;
             });
+        }
+
+        // Clear the current canvas of all the drawn items.
+        private void ClearCanvasTrajectory()
+        {
+            CanvasMap.Children.Clear();
+            discPoints.Clear();
+            tbText.Text = "Canvas has been reset.";
+            indexSlider.Value = 0;
         }
 
         // When the slider value has been moved.
         private void indexSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
+            int index = Convert.ToInt32(Math.Round(indexSlider.Value - 1)); // -1 To use the index within the list.
+            lbShownIndex.Content = "Trajectory " + index + 1 + " / " + trajectories.Count; // Show currently selected trajectory.
+
             // When meassuring is in process go back to 0;
             if (measureLooping)
             {
                 indexSlider.Value = 0;
             }
-            // Show the appropriate image
+            // Show the selected trajectory.
             else
             {
                 CanvasMap.Children.Clear();
-                int index = Convert.ToInt32(Math.Round(indexSlider.Value));
-                if (index > 0)
+                if (index >= 0)
                 {
                     //Show the hovered index trajectory.
+                    foreach (Line item in discTrajectories[index].GetTrajectoryLines())
+                    {
+                        CanvasMap.Children.Add(item);
+                    }
+                    foreach (Rectangle item in discTrajectories[index].GetFinalDot())
+                    {
+                        CanvasMap.Children.Add(item);
+                    }
                 }
             }
         }
