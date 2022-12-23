@@ -257,8 +257,15 @@ namespace DistRS
                     callibrationCornersSet = true;
 
                     int newArraySize = (int)((callibrationBottomRight.X - callibrationTopLeft.X) * (callibrationBottomRight.Y - callibrationTopLeft.Y));
-                    distArray = new float[newArraySize];
-                    callibrationArray = new float[newArraySize];
+                    try
+                    {
+                        distArray = new float[newArraySize];
+                        callibrationArray = new float[newArraySize];
+                    }
+                    catch(OverflowException)
+                    {
+                        MessageBox.Show("Make sure to make a calibration before measuring.");
+                    }
 
                     translate.X = callibrationTopLeft.X * pixelDivider;
                     translate.Y = callibrationTopLeft.Y * pixelDivider;
@@ -344,7 +351,7 @@ namespace DistRS
         private void indexSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             int index = Convert.ToInt32(Math.Round(indexSlider.Value - 1)); // -1 To use the index within the list.
-            lbShownIndex.Content = "Trajectory " + index + 1 + " / " + trajectories.Count; // Show currently selected trajectory.
+            lbShownIndex.Content = "Trajectory " + (index + 1) + " / " + trajectories.Count; // Show currently selected trajectory.
 
             // When meassuring is in process go back to 0;
             if (measureLooping)
