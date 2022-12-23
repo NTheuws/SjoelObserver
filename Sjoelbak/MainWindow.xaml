@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DistRS"
         mc:Ignorable="d"
-        Title="Distance and Camera view" Height="648" Width="1054" MouseLeftButtonUp="Window_MouseLeftButtonUp">
+        Title="Distance and Camera view" Height="648" Width="1054" MouseLeftButtonUp="Window_MouseLeftButtonUp" Closing="Window_Closing">
     <Grid ShowGridLines="False">
 
         <Image x:Name="imgColor" Margin="22,303,0,0" Height="240" Width="320" HorizontalAlignment="Left" VerticalAlignment="Top" />

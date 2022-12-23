@@ -376,5 +376,10 @@ namespace DistRS
                 }
             }
         }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            depthSensor.stopDepthSensor();
+        }
     }
 }

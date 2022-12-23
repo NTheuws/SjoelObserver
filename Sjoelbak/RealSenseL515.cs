@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using CatTrackerApp;
 using System.Windows.Media;
 using System.Windows.Controls;
+using System.Diagnostics;
 
 namespace Sjoelbak
 {
@@ -103,7 +104,7 @@ namespace Sjoelbak
                             var colorizedDepth = colorizer.Process<VideoFrame>(depthFrame).DisposeWith(frames);
 
                             App.Current.Dispatcher.Invoke(DispatcherPriority.Render, updateDepth, colorizedDepth);
-                            App.Current.Dispatcher.Invoke(DispatcherPriority.Render, updateColor, colorFrame); //nullreference
+                            App.Current.Dispatcher.Invoke(DispatcherPriority.Render, updateColor, colorFrame);
 
                             App.Current.Dispatcher.Invoke(new Action(() =>
                             {
