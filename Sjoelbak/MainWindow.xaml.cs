@@ -31,10 +31,10 @@ namespace DistRS
         // Values for the pixel size.
         const int height = 240;
         const int width = 320;
-        const int arraySize = ((width / 5) * (height / 5));
-        float[] distArray = new float[arraySize];
-        float[] callibrationArray = new float[arraySize];
         const int pixelDivider = 2; // every x th pixel will be checked when calculating differences.
+        const int arraySize = ((width / pixelDivider) * (height / pixelDivider));
+        float[] distArray = new float[arraySize];
+        float[] callibrationArray = new float[arraySize];      
 
         // Callibration variables.
         int callibrationClickCount = 0;
@@ -59,7 +59,6 @@ namespace DistRS
 
         // States to make sure the loop ends well.
         bool measureLooping = false;
-        bool measureLoopEnding = false;
         bool placeFinalDot = false;
 
         // Communication to arduino.
@@ -79,29 +78,27 @@ namespace DistRS
         // Reset current values to be able to start the next throw.
         private void ButtonReset_Click(object sender, RoutedEventArgs e)
         {
-            ClearCanvasTrajectory();
+            if (!measureLooping)
+            {
+                ClearCanvasTrajectory();
+            }
         }
 
         private void ComparePixels()
         {
-            // 768 pixels 32x24.
+            // 320x240 res, standard divider = 2. 
+            // This gives a total pixelcount of (320/2) * (240/2) = 19200.
             // Y-axis first followed by the X-axis. Top left to bottom left then moving one to the right.
             int x = 0; // Keep track of the x coordinate of the current pixel.
             int y = 0;  // Keep track of the y coordinate of the current pixel.
 
-            float noiseSupression = 0.01f; // Variable to prevent the noise of the sensor.
+            const float noiseSupression = 0.01f; // Variable to prevent the noise of the sensor.
 
             Rectangle[,] rectangles = new Rectangle[(int)(callibrationBottomRight.X - callibrationTopLeft.X), (int)(callibrationBottomRight.Y - callibrationTopLeft.Y)];
 
             // Initial point is 1 out of the range of the callibration.
             // When a new point is visible this one will always be taken over.
             Point tempDiscPoint = new Point(-1, -1);
-
-            // Start by clearing the last canvas if not looping.
-            if (!measureLooping && !measureLoopEnding)
-            {
-                CanvasMap.Children.Clear();
-            }
 
             for (int i = 0; i < callibrationArray.Length; i++)
             {
@@ -287,6 +284,7 @@ namespace DistRS
         {
             if (!measureLooping)
             {
+                CanvasMap.Children.Clear(); // Clear the map so it doesn't add another trajectory on top.
                 discTrajectory = new DiscTrajectory(); // new trajectory
                 measureLooping = true;
                 placeFinalDot = false;
@@ -301,7 +299,6 @@ namespace DistRS
                 // Loop one final time and place a final dot stamp.
                 placeFinalDot = true;
                 measureLooping = false;
-                measureLoopEnding = true;
                 tbText.Text = "Stopped Measuring";
 
                 SaveTrajectory();
@@ -318,7 +315,6 @@ namespace DistRS
                 ComparePixels();
             }
             observeThread.Abort();
-            measureLoopEnding = false;
             ComparePixels(); 
         }
 
