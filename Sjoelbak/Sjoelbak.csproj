@@ -97,6 +97,7 @@
     <Compile Include="IDepthSensor.cs" />
     <Compile Include="RealSenseL515.cs" />
     <Compile Include="SerialCommunication.cs" />
+    <Compile Include="TrajectObserver.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

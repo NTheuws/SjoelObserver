@@ -31,10 +31,7 @@ namespace DistRS
         // Values for the pixel size.
         const int height = 240;
         const int width = 320;
-        const int pixelDivider = 2; // every x th pixel will be checked when calculating differences.
-        const int arraySize = ((width / pixelDivider) * (height / pixelDivider));
-        float[] distArray = new float[arraySize];
-        float[] callibrationArray = new float[arraySize];      
+        const int pixelDivider = 2; // every x'th pixel will be checked when calculating differences.    
 
         // Callibration variables.
         int callibrationClickCount = 0;
@@ -42,187 +39,27 @@ namespace DistRS
         Point callibrationBottomRight = new Point(width, height); // Maximum values possible.
         bool callibrationCornersSet = false;
 
-        // Lists to keep the past throws saved.
-        List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
-        List<Canvas> trajectories = new List<Canvas>(); // Trajectory of each throw, so it can be shown later.
-        List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
-        DiscTrajectory discTrajectory;
-
-        // Variables for the minimal and maximum size of the lines drawn.
-        int xmin = 0;
-        int ymin = 0;
-        int xmax;
-        int ymax;
-
         // Thread to prevent blocking the screen from being updates while measuring.
         System.Threading.Thread observeThread;
-
-        // States to make sure the loop ends well.
-        bool measureLooping = false;
-        bool placeFinalDot = false;
 
         // Communication to arduino.
         private SerialCommunication launcherCom;
 
-        RealSenseL515 depthSensor;
+        TrajectObserver observer;
+
         public MainWindow()
         {
             InitializeComponent();
-
-            // Create an instance of the sensor.
-            depthSensor = new RealSenseL515();
-            // Initialize
-            depthSensor.startDepthSensor(imgDepth, imgColor);
+            // Create an observer to start the sensor.
+            observer = new TrajectObserver(pixelDivider, imgDepth, imgColor);
         }
 
         // Reset current values to be able to start the next throw.
         private void ButtonReset_Click(object sender, RoutedEventArgs e)
         {
-            if (!measureLooping)
+            if (!observer.GetMeasureLoopState())
             {
                 ClearCanvasTrajectory();
-            }
-        }
-
-        private void ComparePixels()
-        {
-            // 320x240 res, standard divider = 2. 
-            // This gives a total pixelcount of (320/2) * (240/2) = 19200.
-            // Y-axis first followed by the X-axis. Top left to bottom left then moving one to the right.
-            int x = 0; // Keep track of the x coordinate of the current pixel.
-            int y = 0;  // Keep track of the y coordinate of the current pixel.
-
-            const float noiseSupression = 0.01f; // Variable to prevent the noise of the sensor.
-
-            Rectangle[,] rectangles = new Rectangle[(int)(callibrationBottomRight.X - callibrationTopLeft.X), (int)(callibrationBottomRight.Y - callibrationTopLeft.Y)];
-
-            // Initial point is 1 out of the range of the callibration.
-            // When a new point is visible this one will always be taken over.
-            Point tempDiscPoint = new Point(-1, -1);
-
-            for (int i = 0; i < callibrationArray.Length; i++)
-            {
-                // Count amount of pixels that are closer now compared to before.
-                if (callibrationArray[i] != 0
-                    && distArray[i] != 0
-                    && distArray[i] + noiseSupression < callibrationArray[i]) 
-                {
-                    // Find a point for the trajectory.
-                    // Always take the same point of the disc for each state.
-                    // The top-most(priority), right-most(secondary) will be used.
-                    // Y axis is flipped.
-                    if (measureLooping)
-                    {
-                        if (y > tempDiscPoint.Y
-                            || (y == tempDiscPoint.Y && x > tempDiscPoint.X))
-                        {
-                            // Take into account that this starts with 0,0.
-                            // Add or substract the starting points to get an accurate point.
-
-                            // Starts at callibrationTopLeft.X (Xmin) and adds the amount of pixels on the x-axis. 
-                            tempDiscPoint.X = x;
-                            // Starts at callibrationTopLeft.Y (Ymax) and substracts the amount of pixels on the y-axis.
-                            tempDiscPoint.Y = y;
-                        }
-                    }
-                    // Only when the throw has been completed and the disc has come to a stand still.
-                    if (placeFinalDot)
-                    {
-                        this.Dispatcher.Invoke(() =>
-                        {
-                            // Save for the drawing.
-                            rectangles[x, y] =
-                                    new Rectangle()
-                                    {
-                                        Width = 10,
-                                        Height = 10,
-                                        Fill = Brushes.Gold,
-                                        RenderTransform = new TranslateTransform(x * pixelDivider, y * pixelDivider)
-                                    };
-                            // Draw the map.
-                            CanvasMap.Children.Add(rectangles[x, y]); // Add to the canvas.
-                            discTrajectory.AddDot(rectangles[x, y]); // Add to the trajectory.
-                        });
-                    }
-                }
-                y++;
-                // Go through it row to row
-                if ((i + 1) % (callibrationBottomRight.Y - callibrationTopLeft.Y) == 0)
-                {
-                    // Next row.
-                    y = 0;
-                    x++;
-                }
-            }
-            // Only when there has been a new point add it to the array.
-            if (tempDiscPoint.X != -1
-                && tempDiscPoint.Y != -1
-                && tempDiscPoint != null)
-            {
-                // Only add it when the coordinates are different then the ones before.
-                // Slight variations happen so this is to prevent spam in points.
-                Point lastPoint;
-                int lastItem = discPoints.Count;
-
-                if (lastItem > 0)
-                {
-                    lastPoint = discPoints.ElementAt(lastItem - 1);
-                }
-                else
-                {
-                    lastPoint = new Point(0, 0);
-                }
-                // Only create a new point when the distance is a bit different.
-                if (lastPoint != null
-                    || lastPoint.X + 5 < tempDiscPoint.X
-                    || lastPoint.X - 5 > tempDiscPoint.X
-                    || lastPoint.Y + 5 < tempDiscPoint.Y
-                    || lastPoint.Y - 5 > tempDiscPoint.Y)
-                {
-                    // Add the point to the list.
-                    discPoints.Add(tempDiscPoint);
-
-                    // Draw a line between the points
-                    if (lastItem > 0)
-                    {
-                        Application.Current.Dispatcher.Invoke((Action)delegate
-                        {
-                            Line tempLine = new Line()
-                            {
-                                Stroke = System.Windows.Media.Brushes.Black,
-                                // Every second dot is counted, therefore to map it itll need to be multiplied by 2.
-                                X1 = lastPoint.X * pixelDivider,
-                                Y1 = lastPoint.Y * pixelDivider,
-                                X2 = tempDiscPoint.X * pixelDivider,
-                                Y2 = tempDiscPoint.Y * pixelDivider,
-                                StrokeThickness = 5
-                            };
-
-                            // When its the first line trace it to the beginning of the field.
-                            if (lastItem == 1)
-                            {
-                                try
-                                {
-                                    //rc = Δy ⁄ Δx
-                                    double rc = (tempLine.Y1 - tempLine.Y2) / (tempLine.X1 - tempLine.X2);
-
-                                    //Calculate the point where the disc comes from to prevent a larger gap from being created.
-                                    double xDif = xmax - tempLine.X2;
-                                    double yIncrease = xDif * rc;
-                                    tempLine.X1 = xmax;
-                                    tempLine.Y1 = tempLine.Y2 + yIncrease;
-                                }
-                                // Sometimes it will think the new point is placed at 'infinity' which is caused by a bad calibration or someone walking through the field.
-                                catch (ArgumentException)
-                                {
-                                    MessageBox.Show("It wasn't calibrated correctly, please try again.");
-                                }
-                            }
-                            CanvasMap.Children.Add(tempLine); // Add to the currently shown canvas.
-                            discTrajectory.AddLine(tempLine); // Add line to the trajectory.
-                        });
-                    }
-                }
             }
         }
 
@@ -237,7 +74,7 @@ namespace DistRS
 
         private void Window_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            // Half of it to check on every other pixel instead of all of them.
+            // divide the axis to increase performance, divider determines the amount of pixels measured.
             Point p = Mouse.GetPosition(CanvasMap);
             p.X = Math.Round(p.X / pixelDivider);
             p.Y = Math.Round(p.Y / pixelDivider);
@@ -253,27 +90,19 @@ namespace DistRS
                     callibrationBottomRight = p;
                     callibrationCornersSet = true;
 
-                    int newArraySize = (int)((callibrationBottomRight.X - callibrationTopLeft.X) * (callibrationBottomRight.Y - callibrationTopLeft.Y));
-                    try
-                    {
-                        distArray = new float[newArraySize];
-                        callibrationArray = new float[newArraySize];
-                    }
-                    catch(OverflowException)
-                    {
-                        MessageBox.Show("Make sure to make a calibration before measuring.");
-                    }
-
+                    // Transform the canvas to start on the topleft coordinate.
                     translate.X = callibrationTopLeft.X * pixelDivider;
                     translate.Y = callibrationTopLeft.Y * pixelDivider;
 
-                    // Max values are multiplied by 2 since the pixelcount is divided by 2.
-                    xmax = Convert.ToInt32(callibrationBottomRight.X - callibrationTopLeft.X) * pixelDivider;
-                    ymax = Convert.ToInt32(callibrationBottomRight.Y - callibrationTopLeft.Y) * pixelDivider;
-
-                    // Create a callibration frame.
-                    callibrationArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
-                    tbText.Text = "Callibration done.";
+                    bool result = observer.CreateCallibration(callibrationTopLeft, callibrationBottomRight);
+                    if (!result)
+                    {
+                        MessageBox.Show("Make sure the depthsensor is connected.");
+                    }
+                    else
+                    {
+                        tbText.Text = "Callibration has been made.";
+                    }
                     break;
             }
             callibrationClickCount++;
@@ -282,12 +111,11 @@ namespace DistRS
         // Button to loop through the meassure mode.
         private void ButtonMeassureLoop_Click(object sender, RoutedEventArgs e)
         {
-            if (!measureLooping)
+            if (!observer.GetMeasureLoopState())
             {
                 CanvasMap.Children.Clear(); // Clear the map so it doesn't add another trajectory on top.
-                discTrajectory = new DiscTrajectory(); // new trajectory
-                measureLooping = true;
-                placeFinalDot = false;
+                observer.FinalDotToggle(false);
+                observer.MeasureLoopToggle(true);
                 // Start the loop in another thread.
                 observeThread = new System.Threading.Thread(MeassureLoop);
                 observeThread.IsBackground = true;
@@ -297,39 +125,56 @@ namespace DistRS
             else
             {
                 // Loop one final time and place a final dot stamp.
-                placeFinalDot = true;
-                measureLooping = false;
-                tbText.Text = "Stopped Measuring";
-
-                SaveTrajectory();
+                observer.FinalDotToggle(true);
+                observer.MeasureLoopToggle(false);
+                tbText.Text = "Stopped Measuring (manual)";
             }
         }
         // Thread to continiously loop scanning and comparing distances.
         private void MeassureLoop()
         {
-            while (measureLooping)
+            while (observer.GetMeasureLoopState())
             {
-                // Get the last frames values from the sensor.
-                distArray = depthSensor.readDistance(callibrationTopLeft, callibrationBottomRight);
-                // Compare the pixels to the callibration frame.
-                ComparePixels();
+                // Get the last frames values from the sensor and compare them to the callibration.
+                Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    observer.ComparePixels();
+                });
+                if (observer.TrajectoryDone)
+                {
+                    observer.FinalDotToggle(true);
+                    observer.ComparePixels();
+                    observer.MeasureLoopToggle(false);
+                }
             }
+            
+            // Make sure to complete the last frame.
+            //observer.ComparePixels();
+
+            //observer.FinalDotToggle(true);
+            observer.MeasureLoopToggle(false);
+
+            Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                tbText.Text = "Stopped Measuring";
+
+                DiscTrajectory tempTrajectory = observer.GetTrajectory();
+                DrawTrajectory(tempTrajectory);
+            });
+            observer.FinalizeCurrentTrajectory();
+            UpdateSlider();
+
             observeThread.Abort();
-            ComparePixels(); 
         }
 
-        private void SaveTrajectory()
+        private void UpdateSlider()
         {
-            // Save the canvas for later.
-            trajectories.Add(CanvasMap);
-            // Save the trajectory to the list for later use.
-            discTrajectories.Add(discTrajectory);
-
             // Update the slider
             this.Dispatcher.Invoke(() =>
             {
-                lbShownIndex.Content = "Trajectory 0 / " + trajectories.Count;
-                indexSlider.Maximum = trajectories.Count;
+                int trajectoriesCount = observer.GetTotalTrajectories();
+                lbShownIndex.Content = "Trajectory 0 / " + trajectoriesCount;
+                indexSlider.Maximum = trajectoriesCount;
                 indexSlider.Value = 0;
             });
         }
@@ -338,7 +183,6 @@ namespace DistRS
         private void ClearCanvasTrajectory()
         {
             CanvasMap.Children.Clear();
-            discPoints.Clear();
             tbText.Text = "Canvas has been reset.";
             indexSlider.Value = 0;
         }
@@ -347,10 +191,10 @@ namespace DistRS
         private void indexSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             int index = Convert.ToInt32(Math.Round(indexSlider.Value - 1)); // -1 To use the index within the list.
-            lbShownIndex.Content = "Trajectory " + (index + 1) + " / " + trajectories.Count; // Show currently selected trajectory.
+            lbShownIndex.Content = "Trajectory " + (index + 1) + " / " + observer.GetTotalTrajectories(); // Show currently selected trajectory.
 
             // When meassuring is in process go back to 0;
-            if (measureLooping)
+            if (observer.GetMeasureLoopState())
             {
                 indexSlider.Value = 0;
             }
@@ -360,22 +204,30 @@ namespace DistRS
                 CanvasMap.Children.Clear();
                 if (index >= 0)
                 {
+                    DiscTrajectory tempTrajectory = observer.GetTrajectory(index);
                     //Show the hovered index trajectory.
-                    foreach (Line item in discTrajectories[index].GetTrajectoryLines())
-                    {
-                        CanvasMap.Children.Add(item);
-                    }
-                    foreach (Rectangle item in discTrajectories[index].GetFinalDot())
-                    {
-                        CanvasMap.Children.Add(item);
-                    }
+                    DrawTrajectory(tempTrajectory);
                 }
             }
         }
 
+        // Draw trajectory in canvas.
+        private void DrawTrajectory(DiscTrajectory traject)
+        {
+            foreach (Line item in traject.GetTrajectoryLines())
+            {
+                CanvasMap.Children.Add(item);
+            }
+            foreach (Rectangle item in traject.GetFinalDot())
+            {
+                CanvasMap.Children.Add(item);
+            }
+        }
+
+        // Turn off the sensor on closing the window.
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            depthSensor.stopDepthSensor();
+            observer.StopDepthSensor();
         }
     }
 }
