@@ -7,6 +7,7 @@ using System.Windows.Shapes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Sjoelbak
 {
@@ -19,8 +20,13 @@ namespace Sjoelbak
         int ymax;
         int pixelDivider;
 
+        // Score area dividers.
+        int upperDivider;
+        int middleDivider;
+        int lowerDivider;
+
         private Line tempLine;
-        private int difCounter = 0;
+        private int difCounter = 0; // Differences in callibration to current frame.
         public bool TrajectoryDone = false;
 
         bool measureLooping = false; // True when actively tracking trajectory.
@@ -37,6 +43,7 @@ namespace Sjoelbak
         List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
         List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
         DiscTrajectory discTrajectory = new DiscTrajectory();
+        PlayerScore player1 = new PlayerScore();
 
         public TrajectObserver(int pixelDiv, Image depth, Image color) 
         {
@@ -89,8 +96,54 @@ namespace Sjoelbak
         }
 
         // Signal that the current throw has ended and the next one can be started at any time.
-        public void FinalizeCurrentTrajectory()
+        public int FinalizeCurrentTrajectory()
         {
+            // Determine if points have been scored.
+            // When there's no final dot it means that the disc went out of the sensors view
+            // Being either back towards the player or in one of the scoring areas.
+            if (discTrajectory.GetFinalDot().Count == 0)
+            {
+                Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    Line lastLine = discTrajectory.GetTrajectoryLines().Last();
+
+                    // Check if the disc moved towards the left side on the last line of the trajectory.
+                    if (lastLine.X1 > lastLine.X2)
+                    {
+                        // rc = Δy ⁄ Δx
+                        double rc = (lastLine.Y1 - lastLine.Y2) / (lastLine.X1 - lastLine.X2);
+
+                        // Calculate the point where the disc ends up.
+                        double xDif = lastLine.X2 - xmin;
+                        double yIncrease = xDif * rc;
+                        double yEndpoint = yIncrease + lastLine.Y2;
+
+                        // Check scoring depending on Y coordinate.
+                        // From furthest away to closest by the scoring is : 1, 4, 3, 2
+                        if (yEndpoint < upperDivider)
+                        {
+                            // Disc went into 1.
+                            player1.ScoredOne();
+                        }
+                        else if (yEndpoint < middleDivider && yEndpoint > upperDivider)
+                        {
+                            // Disc went into 4.
+                            player1.ScoredFour();
+                        }
+                        else if (yEndpoint < lowerDivider && yEndpoint > middleDivider)
+                        {
+                            // Disc went into 3.
+                            player1.ScoredThree();
+                        }
+                        else if (yEndpoint > lowerDivider)
+                        {
+                            // Disc went into 2.
+                            player1.ScoredTwo();
+                        }
+                    }
+                });
+            }
+
             // Add the current one to the list of trajectories.
             discTrajectories.Add(discTrajectory);
             // Create a new one to keep track of the upcoming trajectory.
@@ -98,6 +151,8 @@ namespace Sjoelbak
             // Clear the current points.
             discPoints.Clear();
             TrajectoryDone = false;
+
+            return player1.GetScore();
         }
 
         // Stop the depthsensor.
@@ -125,6 +180,11 @@ namespace Sjoelbak
             // Max values are multiplied by 2 since the pixelcount is divided by 2.
             xmax = Convert.ToInt32(callibrationBottomRight.X - callibrationTopLeft.X) * pixelDivider;
             ymax = Convert.ToInt32(callibrationBottomRight.Y - callibrationTopLeft.Y) * pixelDivider;
+
+            // Set score area zones.
+            middleDivider = ymax / 2; // Is positioned halfway on the playfield.
+            upperDivider = middleDivider / 2; // Positioned on a quarter.
+            lowerDivider = middleDivider + upperDivider; // Positioned on 3rd quarter.
 
             try
             {
@@ -261,10 +321,10 @@ namespace Sjoelbak
                         {
                             try
                             {
-                                //rc = Δy ⁄ Δx
+                                // rc = Δy ⁄ Δx
                                 double rc = (tempLine.Y1 - tempLine.Y2) / (tempLine.X1 - tempLine.X2);
 
-                                //Calculate the point where the disc comes from to prevent a larger gap from being created.
+                                // Calculate the point where the disc comes from to prevent a larger gap from being created.
                                 double xDif = xmax - tempLine.X2;
                                 double yIncrease = xDif * rc;
                                 tempLine.X1 = xmax;

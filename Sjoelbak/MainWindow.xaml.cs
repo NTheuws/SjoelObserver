@@ -147,7 +147,7 @@ namespace DistRS
                     observer.MeasureLoopToggle(false);
                 }
             }
-            
+
             // Make sure to complete the last frame.
             //observer.ComparePixels();
 
@@ -161,9 +161,13 @@ namespace DistRS
                 DiscTrajectory tempTrajectory = observer.GetTrajectory();
                 DrawTrajectory(tempTrajectory);
             });
-            observer.FinalizeCurrentTrajectory();
-            UpdateSlider();
+            int score = observer.FinalizeCurrentTrajectory();
+            Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                tbPlayerScore.Text = score.ToString();
+            });
 
+            UpdateSlider();
             observeThread.Abort();
         }
 

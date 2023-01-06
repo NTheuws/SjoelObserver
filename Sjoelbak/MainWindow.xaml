@@ -25,6 +25,7 @@
         <Button x:Name="BtnLoopMeassure" Content="Measure loop" HorizontalAlignment="Left" Margin="8,111,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="ButtonMeassureLoop_Click"/>
         <Label x:Name="lbShownIndex" Content="Trajectory 0 / 0" HorizontalAlignment="Left" Margin="382,570,0,0" VerticalAlignment="Top" Width="182"/>
         <Slider x:Name="indexSlider" HorizontalAlignment="Left" Margin="382,548,0,0" VerticalAlignment="Top" Width="640" Height="26" ValueChanged="indexSlider_ValueChanged" Maximum="0" SmallChange="1"/>
+        <TextBox x:Name="tbPlayerScore" HorizontalAlignment="Left" Height="25" Margin="10,208,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="0"/>
     </Grid>
 
 </Window>
