@@ -148,10 +148,6 @@ namespace DistRS
                 }
             }
 
-            // Make sure to complete the last frame.
-            //observer.ComparePixels();
-
-            //observer.FinalDotToggle(true);
             observer.MeasureLoopToggle(false);
 
             Application.Current.Dispatcher.Invoke((Action)delegate
@@ -164,9 +160,12 @@ namespace DistRS
             int score = observer.FinalizeCurrentTrajectory();
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
+                int lastScore = Convert.ToInt32(tbPlayerScore.Text);
+                tbText.AppendText("Scored: (+" + (score - lastScore).ToString() + ")");
+
                 tbPlayerScore.Text = score.ToString();
             });
-
+            
             UpdateSlider();
             observeThread.Abort();
         }
