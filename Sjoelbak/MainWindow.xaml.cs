@@ -29,23 +29,23 @@ namespace DistRS
     public partial class MainWindow : Window
     {
         // Values for the pixel size.
-        const int height = 240;
-        const int width = 320;
-        const int pixelDivider = 2; // every x'th pixel will be checked when calculating differences.    
+        private const int height = 240;
+        private const int width = 320;
+        private const int pixelDivider = 2; // every x'th pixel will be checked when calculating differences.    
 
         // Callibration variables.
-        int callibrationClickCount = 0;
-        Point callibrationTopLeft = new Point(0f, 0f); // Minimal values possible.
-        Point callibrationBottomRight = new Point(width, height); // Maximum values possible.
-        bool callibrationCornersSet = false;
+        private int callibrationClickCount = 0;
+        private Point callibrationTopLeft = new Point(0f, 0f); // Minimal values possible.
+        private Point callibrationBottomRight = new Point(width, height); // Maximum values possible.
+        private bool callibrationCornersSet = false;
 
         // Thread to prevent blocking the screen from being updates while measuring.
-        System.Threading.Thread observeThread;
+        private System.Threading.Thread observeThread;
 
         // Communication to arduino.
         private SerialCommunication launcherCom;
 
-        TrajectObserver observer;
+        private TrajectObserver observer;
 
         public MainWindow()
         {

@@ -14,36 +14,36 @@ namespace Sjoelbak
     internal class TrajectObserver
     {
         // Variables for the minimal and maximum size of the lines drawn.
-        int xmin = 0;
-        int ymin = 0;
-        int xmax;
-        int ymax;
-        int pixelDivider;
+        private int xmin = 0;
+        private int ymin = 0;
+        private int xmax;
+        private int ymax;
+        private int pixelDivider;
 
         // Score area dividers.
-        int upperDivider;
-        int middleDivider;
-        int lowerDivider;
+        private int upperDivider;
+        private int middleDivider;
+        private int lowerDivider;
 
         private Line tempLine;
         private int difCounter = 0; // Differences in callibration to current frame.
         public bool TrajectoryDone = false;
 
-        bool measureLooping = false; // True when actively tracking trajectory.
-        bool placeFinalDot = false; // True when the final dot will be spotted.
+        private bool measureLooping = false; // True when actively tracking trajectory.
+        private bool placeFinalDot = false; // True when the final dot will be spotted.
 
-        IDepthSensor sensor;
-        Point callibrationTopLeft;
-        Point callibrationBottomRight;
-        float[] callibrationArray;
-        float[] distArray;
+        private IDepthSensor sensor;
+        private Point callibrationTopLeft;
+        private Point callibrationBottomRight;
+        private float[] callibrationArray;
+        private float[] distArray;
 
-        int sinceLastLine; // Counts the amount of frames where there hasnt been a new line for the trajectory.
+        private int sinceLastLine; // Counts the amount of frames where there hasnt been a new line for the trajectory.
 
-        List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
-        List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
-        DiscTrajectory discTrajectory = new DiscTrajectory();
-        PlayerScore player1 = new PlayerScore();
+        private List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
+        private List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
+        private DiscTrajectory discTrajectory = new DiscTrajectory();
+        private PlayerScore player1 = new PlayerScore();
 
         public TrajectObserver(int pixelDiv, Image depth, Image color) 
         {
