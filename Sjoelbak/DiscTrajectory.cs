@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows.Shapes;
 
 namespace Sjoelbak
@@ -10,9 +6,9 @@ namespace Sjoelbak
     internal class DiscTrajectory
     {
         // List of all the different lines the trajectory consists of.
-        List<Line> trajectoryLines = new List<Line>();
+        private List<Line> trajectoryLines = new List<Line>();
         // List of all rectangles that make the final dot where the disc ended up.
-        List<Rectangle> finalDot = new List<Rectangle>();
+        private List<Rectangle> finalDot = new List<Rectangle>();
 
         public DiscTrajectory() { }
 

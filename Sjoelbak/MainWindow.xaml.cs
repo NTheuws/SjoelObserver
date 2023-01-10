@@ -1,28 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Intel.RealSense;
-using Stream = Intel.RealSense.Stream;
-using System.Windows.Threading;
-using System.Diagnostics;
 using Sjoelbak;
-using System.Collections;
-using System.Xml;
-using System.Reflection;
 
 namespace DistRS
 {
@@ -37,14 +17,13 @@ namespace DistRS
         private int callibrationClickCount = 0;
         private Point callibrationTopLeft = new Point(0f, 0f); // Minimal values possible.
         private Point callibrationBottomRight = new Point(width, height); // Maximum values possible.
-        private bool callibrationCornersSet = false;
 
-        // Thread to prevent blocking the screen from being updates while measuring.
+        // Thread to prevent blocking the screen from being updated while measuring.
         private System.Threading.Thread observeThread;
 
-        // Communication to arduino.
-        private SerialCommunication launcherCom;
-
+        // Manages the launching mechanism and the connection to the arduino.
+        private LaunchManager launchManager;
+        // Manages everything related to the observation of the board.
         private TrajectObserver observer;
 
         public MainWindow()
@@ -63,15 +42,25 @@ namespace DistRS
             }
         }
 
-        // Connect to the arduino and start playing.
+        // Manually connect to the arduino if it failed before.
         private void ButtonConnect_Click(object sender, RoutedEventArgs e)
         {
-            SerialCommunication com = new SerialCommunication();
-            string[] ports = com.GetAvailablePortNames();
-            launcherCom = new SerialCommunication(ports[0]);
-            launcherCom.Connect();
+            // Make sure the connection isnt already there.
+            if (!launchManager.GetConnectionState())
+            {
+                launchManager.ConnectArduino();
+
+                // Check connection status again.
+                if (launchManager.GetConnectionState())
+                {
+                    BtnConnect.Visibility = Visibility.Hidden;
+                    BtnFire.Visibility = Visibility.Visible;
+                    BtnLoopMeassure.Visibility = Visibility.Visible;
+                }
+            }
         }
 
+        // First two clicks are used to determine the playing field.
         private void Window_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             // divide the axis to increase performance, divider determines the amount of pixels measured.
@@ -88,7 +77,6 @@ namespace DistRS
                     break;
                 case 1: // Second click.
                     callibrationBottomRight = p;
-                    callibrationCornersSet = true;
 
                     // Transform the canvas to start on the topleft coordinate.
                     translate.X = callibrationTopLeft.X * pixelDivider;
@@ -103,6 +91,22 @@ namespace DistRS
                     {
                         tbText.Text = "Callibration has been made.";
                     }
+
+                    // Create a launchManager to manage the launcher and connection to the arduino.
+                    launchManager = new LaunchManager();
+                    //Show the correct buttons 
+                    if (launchManager.GetConnectionState())
+                    {
+                        // Connection has been made.
+                        BtnFire.Visibility = Visibility.Visible;
+                        BtnLoopMeassure.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        // Connection failed.
+                        BtnConnect.Visibility = Visibility.Visible;
+                    }
+                    
                     break;
             }
             callibrationClickCount++;
@@ -113,8 +117,12 @@ namespace DistRS
         {
             if (!observer.GetMeasureLoopState())
             {
-                // Prepare firing mechanism.
-                launcherCom.SendMessage("#5%");
+                // Prepare firing mechanism only when connected.
+                if (launchManager.GetConnectionState())
+                {
+                    launchManager.PrepareLauncher();
+                }
+
                 ClearCanvasTrajectory(); // Clear the map so it doesn't add another trajectory on top.
                 observer.FinalDotToggle(false);
                 observer.MeasureLoopToggle(true);
@@ -142,6 +150,7 @@ namespace DistRS
                 {
                     observer.ComparePixels();
                 });
+                // If the disc has come to a standstill or dissapears out of vision, itll be seen as done.
                 if (observer.TrajectoryDone)
                 {
                     observer.FinalDotToggle(true);
@@ -149,7 +158,7 @@ namespace DistRS
                     observer.MeasureLoopToggle(false);
                 }
             }
-
+            // Stop looping to check frames.
             observer.MeasureLoopToggle(false);
 
             Application.Current.Dispatcher.Invoke((Action)delegate
@@ -162,6 +171,7 @@ namespace DistRS
             int score = observer.FinalizeCurrentTrajectory();
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
+                // See if the player has scored and if so show it.
                 int lastScore = Convert.ToInt32(tbPlayerScore.Text);
                 tbText.AppendText("Scored: (+" + (score - lastScore).ToString() + ")");
 
@@ -188,7 +198,6 @@ namespace DistRS
         private void ClearCanvasTrajectory()
         {
             CanvasMap.Children.Clear();
-            //tbText.Text = "Canvas has been reset.";
             indexSlider.Value = 0;
         }
 
@@ -219,13 +228,16 @@ namespace DistRS
         // Draw trajectory in canvas.
         private void DrawTrajectory(DiscTrajectory traject)
         {
-            foreach (Line item in traject.GetTrajectoryLines())
+            if (traject != null)
             {
-                CanvasMap.Children.Add(item);
-            }
-            foreach (Rectangle item in traject.GetFinalDot())
-            {
-                CanvasMap.Children.Add(item);
+                foreach (Line item in traject.GetTrajectoryLines())
+                {
+                    CanvasMap.Children.Add(item);
+                }
+                foreach (Rectangle item in traject.GetFinalDot())
+                {
+                    CanvasMap.Children.Add(item);
+                }
             }
         }
 
@@ -237,7 +249,11 @@ namespace DistRS
 
         private void BtnFire_Click(object sender, RoutedEventArgs e)
         {
-            launcherCom.SendMessage("#6%");
+            // Only send when connected.
+            if(launchManager.GetConnectionState())
+            {
+                launchManager.FireLauncher();
+            }
         }
     }
 }

@@ -1,8 +1,6 @@
 ﻿using Intel.RealSense;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -11,7 +9,6 @@ using System.Windows.Threading;
 using CatTrackerApp;
 using System.Windows.Media;
 using System.Windows.Controls;
-using System.Diagnostics;
 
 namespace Sjoelbak
 {
@@ -50,7 +47,7 @@ namespace Sjoelbak
             });
         }
 
-        // Setting up the profile of both the depth and color image.
+        // Setting up the profile of both the depth and color image. Then start displaying and updating them with the given images.
         private void initializeSensor(Image imgDepth, Image imgColor)
         {
             try
@@ -156,7 +153,6 @@ namespace Sjoelbak
                         distArray[num] = depth.GetDistance(x, y);
                     }
                 }
-                //depth.Dispose();
                 frames.Dispose();
             }
             return distArray;

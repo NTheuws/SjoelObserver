@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Shapes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Sjoelbak
 {
@@ -49,6 +46,7 @@ namespace Sjoelbak
         {
             pixelDivider = pixelDiv;
 
+            // Create and start the depthsensor.
             sensor = new RealSenseL515();
             sensor.startDepthSensor(depth, color);
         }
@@ -56,7 +54,7 @@ namespace Sjoelbak
         // Measuring loop is on/off.
         public void MeasureLoopToggle(bool state)
         {
-            measureLooping= state;
+            measureLooping = state;
         }
 
         // FinalDot placement is on/off.
@@ -75,12 +73,6 @@ namespace Sjoelbak
         public DiscTrajectory GetTrajectory(int index)
         {
             return discTrajectories[index];
-        }
-
-        // Get the final dot of the current trajectory
-        public List<Rectangle> GetFinalDot()
-        {
-            return discTrajectory.GetFinalDot();
         }
 
         // Get measureLoop.
@@ -119,7 +111,7 @@ namespace Sjoelbak
                         double yEndpoint = yIncrease + lastLine.Y2;
 
                         // Check scoring depending on Y coordinate.
-                        // From furthest away to closest by the scoring is : 1, 4, 3, 2
+                        // From furthest away to closest by the scoring is : 2, 4, 3, 1
                         if (yEndpoint < upperDivider)
                         {
                             // Disc went into 2.
@@ -342,7 +334,7 @@ namespace Sjoelbak
                 }
             }
             // Stop the looping when the disc hasnt been moving.
-            if(/*(difCounter == 0 ||*/ sinceLastLine > 30 && discTrajectory.GetTrajectoryLines().Count > 0) 
+            if(sinceLastLine > 30 && discTrajectory.GetTrajectoryLines().Count > 0) 
             {
                 sinceLastLine = 0;
                 TrajectoryDone = true;

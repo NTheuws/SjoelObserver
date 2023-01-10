@@ -1,9 +1,4 @@
-﻿using Intel.RealSense;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace Sjoelbak
 {
@@ -53,6 +48,7 @@ namespace Sjoelbak
             FourPoint = 0;
         }
 
+        // Calculate and return the current score.
         public int GetScore()
         {
             int points = 0;
