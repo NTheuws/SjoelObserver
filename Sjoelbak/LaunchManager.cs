@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 
 namespace Sjoelbak
 {
@@ -19,6 +20,8 @@ namespace Sjoelbak
         private const string aimLauncherToZone4 = "#4%";
         private const string prepareLauncher = "#5%";
         private const string fireLauncher = "#6%";
+
+        private int lastAngle = 0;
 
         public LaunchManager()
         {
@@ -37,7 +40,10 @@ namespace Sjoelbak
         {
             if (GetConnectionState())
             {
+                // Prepare the shooting mechanism.
                 launcherCom.SendMessage(prepareLauncher);
+                // Aim the mechanism towards the right goal.
+                launcherCom.SendMessage(DetermineNextAngle());
             }
         }
 
@@ -64,6 +70,36 @@ namespace Sjoelbak
             {
                 MessageBox.Show("Make sure the arduino is connected.");
             }
+        }
+
+        private string DetermineNextAngle()
+        {
+            // Aim to the next one, when reached the last start with the first again.
+            lastAngle++;
+            if (lastAngle > 4)
+            {
+                lastAngle = 1;
+            }
+            // If it fails to find a next angle, always go for the highest point count.
+            string val = aimLauncherToZone4;
+
+            // Match the new angle with the right command.
+            switch (lastAngle)
+            {
+                case 1:
+                    val = aimLauncherToZone1;
+                    break;
+                case 2:
+                    val = aimLauncherToZone2;
+                    break;
+                case 3:
+                    val = aimLauncherToZone3;
+                    break;
+                case 4:
+                    val = aimLauncherToZone4;
+                    break;
+            }
+            return val;
         }
     }
 }
