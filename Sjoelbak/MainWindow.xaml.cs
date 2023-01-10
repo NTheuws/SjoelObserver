@@ -68,7 +68,7 @@ namespace DistRS
         {
             SerialCommunication com = new SerialCommunication();
             string[] ports = com.GetAvailablePortNames();
-            launcherCom = new SerialCommunication(ports[2]);
+            launcherCom = new SerialCommunication(ports[0]);
             launcherCom.Connect();
         }
 
@@ -113,7 +113,9 @@ namespace DistRS
         {
             if (!observer.GetMeasureLoopState())
             {
-                CanvasMap.Children.Clear(); // Clear the map so it doesn't add another trajectory on top.
+                // Prepare firing mechanism.
+                launcherCom.SendMessage("#5%");
+                ClearCanvasTrajectory(); // Clear the map so it doesn't add another trajectory on top.
                 observer.FinalDotToggle(false);
                 observer.MeasureLoopToggle(true);
                 // Start the loop in another thread.
@@ -186,7 +188,7 @@ namespace DistRS
         private void ClearCanvasTrajectory()
         {
             CanvasMap.Children.Clear();
-            tbText.Text = "Canvas has been reset.";
+            //tbText.Text = "Canvas has been reset.";
             indexSlider.Value = 0;
         }
 
@@ -231,6 +233,11 @@ namespace DistRS
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             observer.StopDepthSensor();
+        }
+
+        private void BtnFire_Click(object sender, RoutedEventArgs e)
+        {
+            launcherCom.SendMessage("#6%");
         }
     }
 }

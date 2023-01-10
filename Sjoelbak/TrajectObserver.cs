@@ -122,8 +122,8 @@ namespace Sjoelbak
                         // From furthest away to closest by the scoring is : 1, 4, 3, 2
                         if (yEndpoint < upperDivider)
                         {
-                            // Disc went into 1.
-                            player1.ScoredOne();
+                            // Disc went into 2.
+                            player1.ScoredTwo();
                         }
                         else if (yEndpoint < middleDivider && yEndpoint > upperDivider)
                         {
@@ -137,8 +137,8 @@ namespace Sjoelbak
                         }
                         else if (yEndpoint > lowerDivider)
                         {
-                            // Disc went into 2.
-                            player1.ScoredTwo();
+                            // Disc went into 1.
+                            player1.ScoredOne();
                         }
                     }
                 });
@@ -342,7 +342,7 @@ namespace Sjoelbak
                 }
             }
             // Stop the looping when the disc hasnt been moving.
-            if((difCounter == 0 || sinceLastLine > 50) && discTrajectory.GetTrajectoryLines().Count > 0) 
+            if(/*(difCounter == 0 ||*/ sinceLastLine > 30 && discTrajectory.GetTrajectoryLines().Count > 0) 
             {
                 sinceLastLine = 0;
                 TrajectoryDone = true;
