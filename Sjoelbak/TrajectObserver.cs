@@ -23,12 +23,12 @@ namespace Sjoelbak
         private int lowerDivider;
 
         private Line tempLine;
-        private int difCounter = 0; // Differences in callibration to current frame.
         public bool TrajectoryDone = false;
 
         private bool measureLooping = false; // True when actively tracking trajectory.
         private bool placeFinalDot = false; // True when the final dot will be spotted.
 
+        // Variables for the depth sensor.
         private IDepthSensor sensor;
         private Point callibrationTopLeft;
         private Point callibrationBottomRight;
@@ -48,19 +48,17 @@ namespace Sjoelbak
 
             // Create and start the depthsensor.
             sensor = new RealSenseL515();
-            sensor.startDepthSensor(depth, color);
+            sensor.StartDepthSensor(depth, color);
         }
-
-        // Measuring loop is on/off.
-        public void MeasureLoopToggle(bool state)
+        public bool PlaceFinalDot
         {
-            measureLooping = state;
+            get { return placeFinalDot; }
+            set { placeFinalDot = value; }
         }
-
-        // FinalDot placement is on/off.
-        public void FinalDotToggle(bool state)
+        public bool MeasureLooping
         {
-            placeFinalDot = state;
+            get { return measureLooping; }
+            set { measureLooping = value; }
         }
 
         // Get the current trajectory.
@@ -73,12 +71,6 @@ namespace Sjoelbak
         public DiscTrajectory GetTrajectory(int index)
         {
             return discTrajectories[index];
-        }
-
-        // Get measureLoop.
-        public bool GetMeasureLoopState()
-        {
-            return measureLooping;
         }
 
         // Return the total amount of trajectories.
@@ -150,7 +142,7 @@ namespace Sjoelbak
         // Stop the depthsensor.
         public void StopDepthSensor()
         {
-            sensor.stopDepthSensor();
+            sensor.StopDepthSensor();
         }
 
         public bool CreateCallibration(Point calTopLeft, Point calBottomRight)
@@ -181,7 +173,7 @@ namespace Sjoelbak
             try
             {
                 // Create a callibration frame.
-                callibrationArray = sensor.readDistance(callibrationTopLeft, callibrationBottomRight);
+                callibrationArray = sensor.ReadDistance(callibrationTopLeft, callibrationBottomRight);
             }
             catch(Exception)
             {
@@ -194,12 +186,11 @@ namespace Sjoelbak
         // Getting distances from the sensor and comparing them to the original callibration.
         public void ComparePixels()
         {
-            difCounter = 0;
             sinceLastLine++;
 
             if (measureLooping)
             {
-                distArray = sensor.readDistance(callibrationTopLeft, callibrationBottomRight);
+                distArray = sensor.ReadDistance(callibrationTopLeft, callibrationBottomRight);
             }
 
             // 320x240 res, standard divider = 2. 
@@ -223,8 +214,6 @@ namespace Sjoelbak
                     && distArray[i] != 0
                     && distArray[i] + noiseSupression < callibrationArray[i])
                 {
-                    difCounter++;
-
                     // Find a point for the trajectory.
                     // Always take the same point of the disc for each state.
                     // The top-most(priority), right-most(secondary) will be used.

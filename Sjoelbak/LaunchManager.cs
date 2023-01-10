@@ -23,7 +23,7 @@ namespace Sjoelbak
         public LaunchManager()
         {
             launcherCom = new SerialCommunication();
-            ConnectArduino();
+            ConnectSerial();
         }
 
         // Return if the arduino is connected or not.
@@ -51,7 +51,7 @@ namespace Sjoelbak
         }
 
         // Connect the arduino.
-        public void ConnectArduino()
+        public void ConnectSerial()
         {
             SerialCommunication com = new SerialCommunication();
             string[] ports = com.GetAvailablePortNames();

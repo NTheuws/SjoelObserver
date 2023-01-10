@@ -24,19 +24,19 @@ namespace DistRS
         // Manages the launching mechanism and the connection to the arduino.
         private LaunchManager launchManager;
         // Manages everything related to the observation of the board.
-        private TrajectObserver observer;
+        private TrajectObserver trajectObserver;
 
         public MainWindow()
         {
             InitializeComponent();
             // Create an observer to start the sensor.
-            observer = new TrajectObserver(pixelDivider, imgDepth, imgColor);
+            trajectObserver = new TrajectObserver(pixelDivider, imgDepth, imgColor);
         }
 
         // Reset current values to be able to start the next throw.
         private void ButtonReset_Click(object sender, RoutedEventArgs e)
         {
-            if (!observer.GetMeasureLoopState())
+            if (!trajectObserver.MeasureLooping)
             {
                 ClearCanvasTrajectory();
             }
@@ -48,7 +48,7 @@ namespace DistRS
             // Make sure the connection isnt already there.
             if (!launchManager.GetConnectionState())
             {
-                launchManager.ConnectArduino();
+                launchManager.ConnectSerial();
 
                 // Check connection status again.
                 if (launchManager.GetConnectionState())
@@ -82,7 +82,7 @@ namespace DistRS
                     translate.X = callibrationTopLeft.X * pixelDivider;
                     translate.Y = callibrationTopLeft.Y * pixelDivider;
 
-                    bool result = observer.CreateCallibration(callibrationTopLeft, callibrationBottomRight);
+                    bool result = trajectObserver.CreateCallibration(callibrationTopLeft, callibrationBottomRight);
                     if (!result)
                     {
                         MessageBox.Show("Make sure the depthsensor is connected.");
@@ -115,7 +115,7 @@ namespace DistRS
         // Button to loop through the meassure mode.
         private void ButtonMeassureLoop_Click(object sender, RoutedEventArgs e)
         {
-            if (!observer.GetMeasureLoopState())
+            if (!trajectObserver.MeasureLooping)
             {
                 // Prepare firing mechanism only when connected.
                 if (launchManager.GetConnectionState())
@@ -124,8 +124,8 @@ namespace DistRS
                 }
 
                 ClearCanvasTrajectory(); // Clear the map so it doesn't add another trajectory on top.
-                observer.FinalDotToggle(false);
-                observer.MeasureLoopToggle(true);
+                trajectObserver.PlaceFinalDot = false;
+                trajectObserver.MeasureLooping = true;
                 // Start the loop in another thread.
                 observeThread = new System.Threading.Thread(MeassureLoop);
                 observeThread.IsBackground = true;
@@ -135,40 +135,40 @@ namespace DistRS
             else
             {
                 // Loop one final time and place a final dot stamp.
-                observer.FinalDotToggle(true);
-                observer.MeasureLoopToggle(false);
+                trajectObserver.PlaceFinalDot = true;
+               trajectObserver.MeasureLooping = false;
                 tbText.Text = "Stopped Measuring (manual)";
             }
         }
         // Thread to continiously loop scanning and comparing distances.
         private void MeassureLoop()
         {
-            while (observer.GetMeasureLoopState())
+            while (trajectObserver.MeasureLooping)
             {
                 // Get the last frames values from the sensor and compare them to the callibration.
                 Application.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    observer.ComparePixels();
+                    trajectObserver.ComparePixels();
                 });
                 // If the disc has come to a standstill or dissapears out of vision, itll be seen as done.
-                if (observer.TrajectoryDone)
+                if (trajectObserver.TrajectoryDone)
                 {
-                    observer.FinalDotToggle(true);
-                    observer.ComparePixels();
-                    observer.MeasureLoopToggle(false);
+                    trajectObserver.PlaceFinalDot = true;
+                    trajectObserver.ComparePixels();
+                    trajectObserver.MeasureLooping = false;
                 }
             }
             // Stop looping to check frames.
-            observer.MeasureLoopToggle(false);
+            trajectObserver.MeasureLooping = false;
 
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 tbText.Text = "Stopped Measuring";
 
-                DiscTrajectory tempTrajectory = observer.GetTrajectory();
+                DiscTrajectory tempTrajectory = trajectObserver.GetTrajectory();
                 DrawTrajectory(tempTrajectory);
             });
-            int score = observer.FinalizeCurrentTrajectory();
+            int score = trajectObserver.FinalizeCurrentTrajectory();
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 // See if the player has scored and if so show it.
@@ -187,7 +187,7 @@ namespace DistRS
             // Update the slider
             this.Dispatcher.Invoke(() =>
             {
-                int trajectoriesCount = observer.GetTotalTrajectories();
+                int trajectoriesCount = trajectObserver.GetTotalTrajectories();
                 lbShownIndex.Content = "Trajectory 0 / " + trajectoriesCount;
                 indexSlider.Maximum = trajectoriesCount;
                 indexSlider.Value = 0;
@@ -205,10 +205,10 @@ namespace DistRS
         private void indexSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             int index = Convert.ToInt32(Math.Round(indexSlider.Value - 1)); // -1 To use the index within the list.
-            lbShownIndex.Content = "Trajectory " + (index + 1) + " / " + observer.GetTotalTrajectories(); // Show currently selected trajectory.
+            lbShownIndex.Content = "Trajectory " + (index + 1) + " / " + trajectObserver.GetTotalTrajectories(); // Show currently selected trajectory.
 
             // When meassuring is in process go back to 0;
-            if (observer.GetMeasureLoopState())
+            if (trajectObserver.MeasureLooping)
             {
                 indexSlider.Value = 0;
             }
@@ -218,7 +218,7 @@ namespace DistRS
                 CanvasMap.Children.Clear();
                 if (index >= 0)
                 {
-                    DiscTrajectory tempTrajectory = observer.GetTrajectory(index);
+                    DiscTrajectory tempTrajectory = trajectObserver.GetTrajectory(index);
                     //Show the hovered index trajectory.
                     DrawTrajectory(tempTrajectory);
                 }
@@ -244,7 +244,7 @@ namespace DistRS
         // Turn off the sensor on closing the window.
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            observer.StopDepthSensor();
+            trajectObserver.StopDepthSensor();
         }
 
         private void BtnFire_Click(object sender, RoutedEventArgs e)

@@ -19,19 +19,19 @@ namespace Sjoelbak
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
 
         // Start the sensor.
-        public void startDepthSensor(Image depthImg, Image colorImg)
+        public void StartDepthSensor(Image depthImg, Image colorImg)
         {
             initializeSensor(depthImg, colorImg);
         }
 
         // Stop the sensor.
-        public void stopDepthSensor()
+        public void StopDepthSensor()
         {
             tokenSource.Cancel();
         }
 
         // Read the distance of all points within the 2 given boundries.
-        public float[] readDistance(Point topLeft, Point bottomRight)
+        public float[] ReadDistance(Point topLeft, Point bottomRight)
         {
             return CheckPixels(topLeft, bottomRight);
         }
