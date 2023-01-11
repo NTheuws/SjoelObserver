@@ -40,7 +40,7 @@ namespace Sjoelbak
         private List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
         private List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
         private DiscTrajectory discTrajectory = new DiscTrajectory();
-        private PlayerScore player1 = new PlayerScore();
+        private Score player1 = new Score();
 
         public TrajectObserver(int pixelDiv, Image depth, Image color) 
         {

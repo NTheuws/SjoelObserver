@@ -2,14 +2,14 @@
 
 namespace Sjoelbak
 {
-    internal class PlayerScore
+    internal class Score
     {
         private int OnePoint;
         private int TwoPoint; 
         private int ThreePoint;
         private int FourPoint;
 
-        public PlayerScore()
+        public Score()
         {
             // Always start with 0 points;
             OnePoint = 0;

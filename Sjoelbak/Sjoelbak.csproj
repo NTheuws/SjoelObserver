@@ -96,7 +96,7 @@
     <Compile Include="DiscTrajectory.cs" />
     <Compile Include="IDepthSensor.cs" />
     <Compile Include="LaunchManager.cs" />
-    <Compile Include="PlayerScore.cs" />
+    <Compile Include="Score.cs" />
     <Compile Include="RealSenseL515.cs" />
     <Compile Include="SerialCommunication.cs" />
     <Compile Include="TrajectObserver.cs" />
