@@ -27,6 +27,8 @@
         <Slider x:Name="indexSlider" HorizontalAlignment="Left" Margin="382,548,0,0" VerticalAlignment="Top" Width="640" Height="26" ValueChanged="indexSlider_ValueChanged" Maximum="0" SmallChange="1"/>
         <TextBox x:Name="tbPlayerScore" HorizontalAlignment="Left" Height="25" Margin="8,208,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="0"/>
         <Button x:Name="BtnFire" Content="Fire disc" HorizontalAlignment="Left" Margin="8,88,0,0" VerticalAlignment="Top" Width="110" Height="18" Click="BtnFire_Click" Visibility="Hidden"/>
+        <Button x:Name="BtnNextPlayer" Content="Next player" HorizontalAlignment="Left" Margin="8,279,0,0" VerticalAlignment="Top" Width="110" Height="19" Click="BtnNextPlayer_Click"/>
+        <TextBox x:Name="tbPlayerScores" HorizontalAlignment="Left" Height="68" Margin="8,303,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Text="-"/>
     </Grid>
 
 </Window>

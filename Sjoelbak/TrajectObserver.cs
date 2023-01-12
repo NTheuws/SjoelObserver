@@ -40,7 +40,8 @@ namespace Sjoelbak
         private List<Point> discPoints = new List<Point>();  // Array of the recorded points within 1 throw.
         private List<DiscTrajectory> discTrajectories = new List<DiscTrajectory>();
         private DiscTrajectory discTrajectory = new DiscTrajectory();
-        private Score player1 = new Score();
+        private List<PlayerScore> Scores = new List<PlayerScore>();
+        private PlayerScore player1 = new PlayerScore();
 
         public TrajectObserver(int pixelDiv, Image depth, Image color) 
         {
@@ -139,12 +140,22 @@ namespace Sjoelbak
             return player1.GetScore();
         }
 
+        // Ending the player's turn and finalizing their score.
+        public int EndPlayerTurn()
+        {
+            int tempScore = player1.GetScore();
+            Scores.Add(player1);
+            player1 = new PlayerScore();
+            return tempScore;
+        }
+
         // Stop the depthsensor.
         public void StopDepthSensor()
         {
             sensor.StopDepthSensor();
         }
 
+        // Creating a callibrationframe at the start to be able to compare all other data to this.
         public bool CreateCallibration(Point calTopLeft, Point calBottomRight)
         {
             callibrationTopLeft = calTopLeft;

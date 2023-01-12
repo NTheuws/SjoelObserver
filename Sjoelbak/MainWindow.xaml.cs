@@ -247,6 +247,7 @@ namespace DistRS
             trajectObserver.StopDepthSensor();
         }
 
+        // Button to fire the disc from the launcher.
         private void BtnFire_Click(object sender, RoutedEventArgs e)
         {
             // Only send when connected.
@@ -254,6 +255,13 @@ namespace DistRS
             {
                 launchManager.FireLauncher();
             }
+        }
+
+        // Finalize the score of the current player. 
+        private void BtnNextPlayer_Click(object sender, RoutedEventArgs e)
+        {
+            int score = trajectObserver.EndPlayerTurn();
+            tbPlayerScore.AppendText(score.ToString());
         }
     }
 }
