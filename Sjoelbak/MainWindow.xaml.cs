@@ -244,7 +244,7 @@ namespace DistRS
         // Turn off the sensor on closing the window.
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            trajectObserver.StopDepthSensor();
+            trajectObserver.Stop();
         }
 
         // Button to fire the disc from the launcher.

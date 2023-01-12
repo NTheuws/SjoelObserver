@@ -49,7 +49,7 @@ namespace Sjoelbak
 
             // Create and start the depthsensor.
             sensor = new RealSenseL515();
-            sensor.StartDepthSensor(depth, color);
+            sensor.Start(depth, color);
         }
         public bool PlaceFinalDot
         {
@@ -150,9 +150,9 @@ namespace Sjoelbak
         }
 
         // Stop the depthsensor.
-        public void StopDepthSensor()
+        public void Stop()
         {
-            sensor.StopDepthSensor();
+            sensor.Stop();
         }
 
         // Creating a callibrationframe at the start to be able to compare all other data to this.

@@ -19,13 +19,13 @@ namespace Sjoelbak
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
 
         // Start the sensor.
-        public void StartDepthSensor(Image depthImg, Image colorImg)
+        public void Start(Image depthImg, Image colorImg)
         {
             initializeSensor(depthImg, colorImg);
         }
 
         // Stop the sensor.
-        public void StopDepthSensor()
+        public void Stop()
         {
             tokenSource.Cancel();
         }
