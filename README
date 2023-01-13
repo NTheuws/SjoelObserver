@@ -1,0 +1,12 @@
+This is an application to observe a sjoelbak (dutch shuffleboard) with an option to also automating the shooting of the disc.
+The project consists of the C# application built in Visual studio 2022 and a small application for an arduino.
+
+The arduino/disc shooter will be within the DiscShooter folder.
+The Other part can be directly opened in VS and can be edited as soon as you open it.
+
+The Depthsensor used for this project is the Realsense L515 from Intel.
+To be able to run the application with said sensor, you not only need to have the sensor but also the neccesary driver. This can be downloaded here: https://github.com/IntelRealSense/librealsense/releases/tag/v2.42.0 
+
+The communication with the arduino is done through Serial.
+
+If in any case you want to add another launcher or sensor, this is possible. Each of them has an interface which as long as you follow these they should work.
