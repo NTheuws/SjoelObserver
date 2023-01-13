@@ -94,6 +94,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="DiscTrajectory.cs" />
+    <Compile Include="ICommunication.cs" />
     <Compile Include="IDepthSensor.cs" />
     <Compile Include="LaunchManager.cs" />
     <Compile Include="PlayerScore.cs" />

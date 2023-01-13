@@ -12,7 +12,7 @@ namespace Sjoelbak
     internal class LaunchManager
     {
         // Communication to arduino.
-        private SerialCommunication launcherCom;
+        private ICommunication launcherCom;
         // Commands for the arduino.
         private const string aimLauncherToZone1 = "#1%";
         private const string aimLauncherToZone2 = "#2%";

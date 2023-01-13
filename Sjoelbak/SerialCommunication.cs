@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sjoelbak;
+using System;
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DistRS
 {
-    class SerialCommunication
+    class SerialCommunication : ICommunication
     {
         private SerialPort serialPort;
 
